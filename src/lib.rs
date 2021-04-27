@@ -168,7 +168,7 @@ fn parse_fn(function: ItemFn, errors: HashMap<Path, Option<Lit>>) -> TokenStream
 	let error_variants_two = error_variants.clone();
 	let error_variants_three = error_variants.clone();
 
-	panic!("{}", TokenStream::from(quote!
+	(quote!
 	{
 		#[doc = #error_doc]
 		#[derive(Debug)]
@@ -207,5 +207,5 @@ fn parse_fn(function: ItemFn, errors: HashMap<Path, Option<Lit>>) -> TokenStream
 			-> std::result::Result<#output, #error_ident>
 		#where_clause
 		#block
-	}));
+	}).into()
 }
