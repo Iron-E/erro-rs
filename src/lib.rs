@@ -204,7 +204,7 @@ fn parse_fn(function: ItemFn, errors: HashMap<Path, Option<Lit>>) -> TokenStream
 		impl std::error::Error for #error_ident {}
 
 		#(#attrs)* #vis #constness #asyncness #unsafety #abi #fn_token #ident #generics (#(#inputs),* #variadic) #where_clause
-			-> std::result::Result<#output, #error_ident
+			-> std::result::Result<#output, #error_ident>
 		#block
 	}).into()
 }
