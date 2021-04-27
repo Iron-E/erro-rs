@@ -1,0 +1,26 @@
+# See https://doc.rust-lang.org/cargo/reference/manifest.html
+[package]
+name = "erro-rs"
+version = "0.1.0"
+authors = ["Iron-E <code.iron.e@gmail.com>"]
+description = ""
+
+categories = ["Rust patterns"]
+edition = "2018"
+keywords = ["result", "error", "clause", "function", "fn"]
+license = "GPL3"
+readme = "./README.md"
+repository = "https://www.github.com/Iron-E/erro-rs"
+
+[dependencies]
+# Case conversion
+heck = "0.3"
+
+# Parsing
+syn = {features=["extra-traits", "full"], version="1"}
+
+# Tokenizing
+quote = "1"
+
+[lib]
+proc-macro = true
