@@ -116,7 +116,7 @@ pub fn errors(attr: TokenStream, item: TokenStream) -> TokenStream
 		_ => None,
 	}).collect();
 
-	if let Ok(function) = syn::parse::<ItemFn>(item.clone())
+	if let Ok(function) = syn::parse::<ItemFn>(item)
 	{
 		return parse_fn(function, attr_args_parsed);
 	}
