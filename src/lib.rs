@@ -136,7 +136,8 @@ fn parse_fn(function: ItemFn, errors: HashMap<Path, Option<Lit>>) -> TokenStream
 	let abi = function.sig.abi;
 	let fn_token = function.sig.fn_token;
 	let ident = function.sig.ident;
-	let generics = function.sig.generics;
+	let generics = function.sig.generics.clone();
+	let where_clause = function.sig.generics.where_clause;
 	let inputs = function.sig.inputs.into_iter();
 	let variadic = function.sig.variadic;
 	let output = match function.sig.output
@@ -202,8 +203,8 @@ fn parse_fn(function: ItemFn, errors: HashMap<Path, Option<Lit>>) -> TokenStream
 		#[automatically_derived]
 		impl std::error::Error for #error_ident {}
 
-		#(#attrs)* #vis #constness #asyncness #unsafety #abi #fn_token #ident #generics (#(#inputs)*) #variadic
-			-> std::result::Result<#output, #error_ident>
+		#(#attrs)* #vis #constness #asyncness #unsafety #abi #fn_token #ident #generics (#(#inputs)*, #variadic) #where_clause
+			-> std::result::Result<#output, #error_ident
 		#block
 	}).into()
 }
