@@ -149,7 +149,7 @@ fn parse_fn(function: ItemFn, errors: HashMap<Path, Option<Lit>>) -> TokenStream
 		ReturnType::Type(_, t) => *t,
 	};
 
-	let error_doc = format!("/// The [error](std::error::Error) returned by [`{}`]", ident);
+	let error_doc = format!("The [error](std::error::Error) returned by [`{}`]", ident);
 	let error_ident = format_ident!("{}Error", ident.to_string().to_camel_case());
 	let error_variants = errors.iter().map(|(err, alias)| format_ident!("{}",
 		if let Some(Lit::Str(alias)) = alias
