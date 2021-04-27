@@ -1,10 +1,11 @@
 use
 {
+	std::collections::HashMap,
 	proc_macro::TokenStream,
 
 	heck::CamelCase,
 	quote::{format_ident, quote},
-	syn::{AttributeArgs, ItemFn, Meta, NestedMeta, Path, punctuated::Punctuated, ReturnType, token::Paren, Type::Tuple, TypeTuple},
+	syn::{AttributeArgs, ItemFn, Lit, Meta, NestedMeta, Path, punctuated::Punctuated, ReturnType, token::Paren, Type::Tuple, TypeTuple},
 };
 
 /// # Summary
@@ -24,6 +25,12 @@ use
 /// >
 /// > This macro uses the paths to each `Error` to determine the name of the generated variants.
 /// > That is to say `std::io::Error` will map to `StdIo`, and `io::Error` will map to `Io`.
+///
+/// You can override the default naming by assigning the `Error` an alias:
+///
+/// ```ignore
+/// #[errors(bincode::Error, std::io::Error = "IoError")]
+/// ```
 ///
 /// # Remarks
 ///
@@ -102,11 +109,12 @@ use
 pub fn errors(attr: TokenStream, item: TokenStream) -> TokenStream
 {
 	let attr_args = syn::parse_macro_input!(attr as AttributeArgs);
-	let attr_args_parsed = attr_args.into_iter().filter_map(|a| match a
+	let attr_args_parsed: HashMap<_, _> = attr_args.into_iter().filter_map(|a| match a
 	{
-		NestedMeta::Meta(Meta::Path(p)) => Some(p),
+		NestedMeta::Meta(Meta::Path(p)) => Some((p, None)),
+		NestedMeta::Meta(Meta::NameValue(v)) => Some((v.path, Some(v.lit))),
 		_ => None,
-	});
+	}).collect();
 
 	if let Ok(function) = syn::parse::<ItemFn>(item.clone())
 	{
@@ -116,11 +124,11 @@ pub fn errors(attr: TokenStream, item: TokenStream) -> TokenStream
 	panic!("The #[errors] macro can only be used on functions");
 }
 
-fn parse_fn(function: ItemFn, errors: impl Clone + Iterator<Item=Path>) -> TokenStream
+fn parse_fn(function: ItemFn, errors: HashMap<Path, Option<Lit>>) -> TokenStream
 {
 	let attrs = function.attrs;
-	let vis = function.vis;
 	let block = function.block;
+	let vis = function.vis;
 
 	let constness = function.sig.constness;
 	let asyncness = function.sig.asyncness;
@@ -143,11 +151,19 @@ fn parse_fn(function: ItemFn, errors: impl Clone + Iterator<Item=Path>) -> Token
 
 	let error_doc = format!("/// The [error](std::error::Error) returned by [`{}`]", ident);
 	let error_ident = format_ident!("{}Error", ident.to_string().to_camel_case());
-	let error_variants = errors.clone().map(|e| format_ident!("{}",
-		e.segments.into_iter().map(|s| s.ident.to_string().to_camel_case()).collect::<String>().replace("Error", "")
+	let error_variants = errors.iter().map(|(err, alias)| format_ident!("{}",
+		if let Some(Lit::Str(alias)) = alias
+		{
+			alias.value()
+		}
+		else
+		{
+			err.segments.iter().map(|s| s.ident.to_string().replace("Error", "").to_camel_case()).collect()
+		}
 	));
 
-	let errors_two = errors.clone();
+	let errors_one = errors.keys();
+	let errors_two = errors.keys();
 	let error_variants_two = error_variants.clone();
 	let error_variants_three = error_variants.clone();
 
@@ -157,7 +173,7 @@ fn parse_fn(function: ItemFn, errors: impl Clone + Iterator<Item=Path>) -> Token
 		#[derive(Debug)]
 		#vis enum #error_ident
 		{
-			#(#error_variants (#errors)),*
+			#(#error_variants (#errors_one)),*
 		}
 
 		#[automatically_derived]
